@@ -11,7 +11,8 @@ import java.util.Optional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
+@RestController
+@RequestMapping("/recipes")
 public class RecipeController {
     private final RecipeService recipeService;
 
@@ -21,7 +22,7 @@ public class RecipeController {
 
     @PostMapping
     public ResponseEntity<Recipe> createRecipe(@Valid @RequestBody Recipe recipe) {
-        Recipe savedRecipe = recipeService.creataRecipe(recipe);
+        Recipe savedRecipe = recipeService.createRecipe(recipe);
         return ResponseEntity.ok(savedRecipe);
     }
 

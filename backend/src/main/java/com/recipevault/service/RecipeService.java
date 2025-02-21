@@ -7,7 +7,9 @@ import com.recipevault.repository.RecipeRepository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.stereotype.Service;
 
+@Service
 public class RecipeService {
     private final RecipeRepository recipeRepository;
 
@@ -24,7 +26,7 @@ public class RecipeService {
         return recipeRepository.findById(id);
     }
 
-    public Recipe creataRecipe(Recipe recipe) {
+    public Recipe createRecipe(Recipe recipe) {
         for (Ingredient ingredient : recipe.getIngredients()) {
             ingredient.setRecipe(recipe);
         }
