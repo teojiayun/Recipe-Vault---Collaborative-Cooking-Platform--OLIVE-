@@ -1,15 +1,16 @@
 package com.recipevault.controller;
 
+import com.recipevault.dto.RecipeRequestDTO;
 import com.recipevault.model.Recipe;
 import com.recipevault.service.RecipeService;
 
-import jakarta.validation.Valid;
-
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/recipes")
@@ -20,9 +21,25 @@ public class RecipeController {
         this.recipeService = recipeService;
     }
 
-    @PostMapping
-    public ResponseEntity<Recipe> createRecipe(@Valid @RequestBody Recipe recipe) {
-        Recipe savedRecipe = recipeService.createRecipe(recipe);
+    @PostMapping(consumes = "multipart/form-data")
+    public ResponseEntity<Recipe> createRecipe(
+            @RequestParam("title") String title,
+            @RequestParam("difficulty") String difficulty,
+            @RequestParam("instructions") String instructions,
+            @RequestParam("creatorName") String creatorName,
+            @RequestParam("ingredients") List<String> ingredients,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+
+        
+        RecipeRequestDTO recipeDTO = new RecipeRequestDTO();
+        recipeDTO.setTitle(title);
+        recipeDTO.setDifficulty(difficulty);
+        recipeDTO.setInstructions(instructions);
+        recipeDTO.setCreatorName(creatorName);
+        recipeDTO.setIngredients(ingredients);
+        recipeDTO.setImage(image);
+
+        Recipe savedRecipe = recipeService.createRecipe(recipeDTO);
         return ResponseEntity.ok(savedRecipe);
     }
 
