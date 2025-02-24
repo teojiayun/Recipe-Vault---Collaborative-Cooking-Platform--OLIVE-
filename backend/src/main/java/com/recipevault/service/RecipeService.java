@@ -1,21 +1,40 @@
 package com.recipevault.service;
 
+import com.recipevault.dto.RecipeRequestDTO;
+import com.recipevault.model.Difficulty;
 import com.recipevault.model.Ingredient;
 import com.recipevault.model.Recipe;
 import com.recipevault.repository.RecipeRepository;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class RecipeService {
     private final RecipeRepository recipeRepository;
 
+    @Value("${file.upload-dir}")
+    private String uploadDir;
+
     public RecipeService(RecipeRepository recipeRepository) {
-        // Dependency Injection
         this.recipeRepository = recipeRepository;
+    }
+
+    private void createUploadDirectory() {
+        File directory = new File(uploadDir);
+        if (!directory.exists()) {
+            directory.mkdir(); 
+        }
     }
 
     public List<Recipe> getAllRecipes() {
@@ -26,10 +45,30 @@ public class RecipeService {
         return recipeRepository.findById(id);
     }
 
-    public Recipe createRecipe(Recipe recipe) {
-        for (Ingredient ingredient : recipe.getIngredients()) {
-            ingredient.setRecipe(recipe);
+    public Recipe createRecipe(RecipeRequestDTO recipeDTO) throws IOException {
+        createUploadDirectory();
+
+        Recipe recipe = new Recipe();
+        recipe.setTitle(recipeDTO.getTitle());
+        recipe.setDifficulty(Difficulty.valueOf(recipeDTO.getDifficulty().toUpperCase()));
+        recipe.setInstructions(recipeDTO.getInstructions());
+        recipe.setCreatorName(recipeDTO.getCreatorName());
+
+        // Save Image if uploaded
+        MultipartFile image = recipeDTO.getImage();
+        if (image != null && !image.isEmpty()) {
+            String fileName = UUID.randomUUID() + "-" + image.getOriginalFilename();
+            Path filePath = Paths.get(uploadDir, fileName);
+            Files.write(filePath, image.getBytes());
+            recipe.setImageUrl("/uploads/" + fileName);
         }
+
+        // Save Ingredients
+        List<Ingredient> ingredients = recipeDTO.getIngredients().stream()
+                .map(ingredientName -> new Ingredient(null, ingredientName, recipe))
+                .toList();
+        recipe.setIngredients(ingredients);
+
         return recipeRepository.save(recipe);
     }
 
