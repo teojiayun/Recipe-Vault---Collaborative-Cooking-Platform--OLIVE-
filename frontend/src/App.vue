@@ -1,30 +1,61 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
   <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+      <router-link to="/" class="nav-link">Dashboard</router-link>
+      <router-link to="/create" class="nav-link">Create Recipe</router-link>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <router-view></router-view> <!-- Dynamic page rendering -->
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
+<script>
+import { useRoute } from "vue-router";
+
+export default {
+  computed: {
+    isRecipeDetailPage() {
+      const route = useRoute();
+      return route.path.startsWith("/recipe/");
+    },
+  },
+};
+</script>
+
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.navbar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #333;
+  padding: 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 20px;
+  margin: 0 10px;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.nav-link:hover {
+  background: #555;
+  border-radius: 5px;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: auto;
+  padding-top: 60px;
 }
 </style>
