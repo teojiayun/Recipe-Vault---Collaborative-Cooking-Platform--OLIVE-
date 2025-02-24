@@ -2,6 +2,7 @@
 import { onMounted, ref, type PropType } from 'vue'
 import type { Recipe } from '../store/recipeStore'
 import { apiService } from '../services/apiService'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   recipe: {
@@ -10,6 +11,7 @@ const props = defineProps({
   }
 })
 
+const router = useRouter()
 const imageSrc = ref('https://via.placeholder.com/150')
 
 onMounted(async () => {
@@ -30,7 +32,7 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
 </script>
 
 <template>
-  <el-card class="recipe-card" shadow="always">
+  <el-card class="recipe-card" shadow="always" @click="router.push(`/recipe/${recipe.id}`)">
     <img class="recipe-image" :src="imageSrc" alt="Recipe Image" />
 
     <div class="recipe-info">
@@ -51,11 +53,21 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
 .recipe-card {
   width: 300px;
   height: 450px; /* ✅ Keeps all cards uniform */
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   padding: 15px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.recipe-card:hover {
+  transform: scale(1.05);
+}
+
+.recipe-info {
+  margin-top: 10px;
 }
 
 .recipe-image {
