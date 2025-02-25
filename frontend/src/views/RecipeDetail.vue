@@ -37,7 +37,6 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
   <el-container v-if="recipe">
     <el-card class="detail-card">
       <img class="recipe-image" :src="imageSrc" alt="Recipe Image" />
-      
       <h2>{{ recipe.title }}</h2>
       <el-tag :type="getDifficultyTagType(recipe.difficulty)">
         {{ recipe.difficulty }}
@@ -54,7 +53,10 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
       <h3>Instructions</h3>
       <p>{{ recipe.instructions }}</p>
 
-      <el-button type="primary" @click="router.push('/')">Back to Dashboard</el-button>
+      <div class="button-group">
+        <el-button type="primary" @click="router.push(`/update-recipe/${recipe.id}`)">Edit Recipe</el-button>
+        <el-button type="info" @click="router.push('/')">Back</el-button>
+      </div>
     </el-card>
   </el-container>
 </template>

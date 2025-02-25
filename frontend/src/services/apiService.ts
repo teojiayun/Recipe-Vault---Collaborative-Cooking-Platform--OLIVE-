@@ -45,5 +45,17 @@ export const apiService = {
       console.error("Error creating recipe:", error)
       throw error
     }
+  },
+
+  async updateRecipe(recipeId: number, updatedData: FormData) {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/recipes/${recipeId}`, updatedData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error updating recipe:', error)
+      throw error
+    }
   }
 }
