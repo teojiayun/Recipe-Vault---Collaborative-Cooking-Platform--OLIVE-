@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRecipeStore } from '../store/recipeStore'
 import { storeToRefs } from 'pinia'
 import RecipeCard from '../components/RecipeCard.vue'
@@ -26,6 +26,11 @@ const filteredRecipes = computed(() => {
       : true
     return matchesSearch && matchesDifficulty && matchesIngredientCount
   })
+})
+
+// Reset pagination when filters change
+watch([searchQuery, selectedDifficulty, selectedIngredientCount], () => {
+  currentPage.value = 1
 })
 
 // Pagination
