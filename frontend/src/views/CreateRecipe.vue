@@ -1,119 +1,193 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRecipeStore } from '../store/recipeStore'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/apiService'
+import { Delete, Plus, ZoomIn } from '@element-plus/icons-vue'
+import type { FormInstance, FormRules, UploadFile } from 'element-plus'
 
 const recipeStore = useRecipeStore()
 const router = useRouter()
 
-const title = ref('')
-const difficulty = ref('EASY')
-const ingredients = ref([''])
-const instructions = ref('')
-const creator = ref('')
-const imageFile = ref<File | null>(null)
-const imagePreview = ref<string | null>(null)
+const formRef = ref<FormInstance | null>(null)
+
+// Recipe Form Data
+const recipeForm = reactive({
+  title: '',
+  difficulty: 'EASY',
+  ingredients: [''],
+  instructions: '',
+  creator: '',
+  imageFile: null as File | null
+})
+
+// Validation Rules
+const rules: FormRules = {
+  title: [{ required: true, message: 'Title is required', trigger: 'blur' }],
+  difficulty: [{ required: true, message: 'Difficulty is required', trigger: 'change' }],
+  creator: [{ required: true, message: 'Creator name is required', trigger: 'blur' }],
+  instructions: [{ required: true, message: 'Instructions are required', trigger: 'blur' }],
+  ingredients: [
+    { required: true, message: 'At least one ingredient is required', trigger: 'blur' },
+    { validator: (rule, value, callback) => {
+        if (value.some((ing: string) => !ing.trim())) {
+          callback(new Error('Ingredient cannot be empty'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+const dialogVisible = ref(false)
 const loading = ref(false)
 
-const addIngredient = () => ingredients.value.push('')
-const removeIngredient = (index: number) => ingredients.value.splice(index, 1)
+// // Add/Remove Ingredients
+// const addIngredient = () => ingredients.value.push('')
+// const removeIngredient = (index: number) => ingredients.value.splice(index, 1)
 
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    imageFile.value = target.files[0]
+// Image Upload Handling
+const fileList = ref<UploadFile[]>([])
+const previewUrl = ref('')
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      imagePreview.value = e.target?.result as string
-    }
-    reader.readAsDataURL(imageFile.value)
+// Handle File Upload (Limit to 1)
+const handleFileChange = (file: UploadFile) => {
+  fileList.value = [file] // Only allow one file
+  recipeForm.imageFile = file.raw as File
+
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    previewUrl.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file.raw as File)
+}
+
+// Handle Remove Image
+const handleRemove = () => {
+  fileList.value = []
+  recipeForm.imageFile = null
+  previewUrl.value = ''
+  dialogVisible.value = false
+}
+
+// Open Image Preview Dialog
+const handlePictureCardPreview = () => {
+  if (previewUrl.value) {
+    dialogVisible.value = true
   }
 }
 
+// Submit Recipe
 const createRecipe = async () => {
-  if (!title.value || !instructions.value || !creator.value || ingredients.value.some(ing => !ing.trim())) {
-    alert("Please fill in all fields.");
-    return;
-  }
+  formRef.value?.validate(async (valid) => {
+    if (!valid) return
 
-  loading.value = true;
-  try {
-    const formData = new FormData()
-    formData.append("title", title.value)
-    formData.append("difficulty", difficulty.value)
-    formData.append("instructions", instructions.value)
-    formData.append("creatorName", creator.value)
-    formData.append("ingredients", JSON.stringify(ingredients.value))
+    loading.value = true
+    try {
+      const formData = new FormData()
+      formData.append("title", recipeForm.title)
+      formData.append("difficulty", recipeForm.difficulty)
+      formData.append("instructions", recipeForm.instructions)
+      formData.append("creatorName", recipeForm.creator)
+      formData.append("ingredients", JSON.stringify(recipeForm.ingredients))
 
-    if (imageFile.value) {
-      formData.append("image", imageFile.value)
+      if (recipeForm.imageFile) {
+        formData.append("image", recipeForm.imageFile)
+      }
+
+      await apiService.createRecipe(formData)
+      await recipeStore.loadRecipes()
+      router.push('/')
+    } catch (error) {
+      console.error("Error creating recipe:", error)
+      alert("Failed to create recipe. Please try again.")
+    } finally {
+      loading.value = false
     }
-
-    await apiService.createRecipe(formData)
-    await recipeStore.loadRecipes()
-    router.push('/')
-  } catch (error) {
-    console.error("Error creating recipe:", error)
-    alert("Failed to create recipe. Please try again.")
-  } finally {
-    loading.value = false
-  }
+  })
 }
 </script>
 
 <template>
   <div class="create-recipe">
     <h2>Create a New Recipe</h2>
-    
-    <el-form @submit.prevent="createRecipe" class="recipe-form">
-      <el-form-item label="Title">
-        <el-input v-model="title" required />
+
+    <el-form ref="formRef" :model="recipeForm" :rules="rules" class="recipe-form" label-width="120px">
+      <!-- Title -->
+      <el-form-item label="Title" prop="title">
+        <el-input v-model="recipeForm.title" />
       </el-form-item>
 
+      <!-- Difficulty -->
       <el-form-item label="Difficulty">
-        <el-select v-model="difficulty">
+        <el-select v-model="recipeForm.difficulty">
           <el-option label="Easy" value="EASY" />
           <el-option label="Medium" value="MEDIUM" />
           <el-option label="Hard" value="HARD" />
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Ingredients">
+      <!-- Creator Name -->
+      <el-form-item label="Creator" prop="creator">
+        <el-input v-model="recipeForm.creator" />
+      </el-form-item>
+
+      <!-- Instructions -->
+      <el-form-item label="Instructions" prop="instructions">
+        <el-input v-model="recipeForm.instructions" type="textarea" rows="4" />
+      </el-form-item>
+
+      <!-- Ingredients List -->
+      <el-form-item label="Ingredients" prop="ingredients">
         <div class="ingredient-list">
-          <div v-for="(ingredient, index) in ingredients" :key="index" class="ingredient-row">
-            <el-input v-model="ingredients[index]" required />
-            <el-button type="danger" @click="removeIngredient(index)" v-if="ingredients.length > 1">
-              ❌
-            </el-button>
+          <div v-for="(ingredient, index) in recipeForm.ingredients" :key="index" class="ingredient-row">
+            <el-input v-model="recipeForm.ingredients[index]" />
+            <el-button type="danger" :icon="Delete" @click="recipeForm.ingredients.splice(index, 1)" v-if="recipeForm.ingredients.length > 1" />
           </div>
         </div>
-        <el-button type="primary" @click="addIngredient">➕ Add Ingredient</el-button>
+        <el-button type="primary" :icon="Plus" @click="recipeForm.ingredients.push('')">Add Ingredient</el-button>
       </el-form-item>
 
-      <el-form-item label="Instructions">
-        <el-input v-model="instructions" type="textarea" required />
-      </el-form-item>
-
-      <el-form-item label="Creator">
-        <el-input v-model="creator" required />
-      </el-form-item>
-
+      <!-- Image Upload with Preview -->
       <el-form-item label="Recipe Image">
-        <input type="file" @change="handleFileChange" accept="image/*" />
-        <div v-if="imagePreview" class="image-preview-container">
-          <img :src="imagePreview" alt="Image Preview" class="image-preview" />
-        </div>
+        <el-upload
+          action="#"
+          list-type="picture-card"
+          :auto-upload="false"
+          :limit="1"
+          :on-change="handleFileChange"
+          :on-remove="handleRemove"
+          :file-list="fileList"
+          @preview="handlePictureCardPreview"
+        >
+          <el-icon><Plus /></el-icon>
+        </el-upload>
       </el-form-item>
 
-      <el-button type="primary" native-type="submit" :loading="loading">
-        {{ loading ? "Creating..." : "Create Recipe" }}
-      </el-button>
+      <!-- Image Preview Dialog -->
+      <el-dialog v-model="dialogVisible" title="Image Preview">
+        <img class="preview-img" :src="previewUrl" alt="Preview Image" />
+        <div class="dialog-buttons">
+          <el-button type="danger" @click="handleRemove">
+            <el-icon><Delete /></el-icon> Delete
+          </el-button>
+          <el-button type="primary" @click="dialogVisible = false">
+            Close
+          </el-button>
+        </div>
+      </el-dialog>
+
+      <!-- Submit Button -->
+      <el-form-item>
+        <el-button type="primary" native-type="submit" :loading="loading" class="submit-button" @click="createRecipe">
+          {{ loading ? "Creating..." : "Create Recipe" }}
+        </el-button>
+      </el-form-item>
     </el-form>
   </div>
 </template>
-
 
 <style scoped>
 .create-recipe {
@@ -142,17 +216,16 @@ const createRecipe = async () => {
   gap: 10px;
 }
 
-.image-preview-container {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
+.preview-img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
 }
 
-.image-preview {
-  max-width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 5px;
+.dialog-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }
 
 .el-button {
