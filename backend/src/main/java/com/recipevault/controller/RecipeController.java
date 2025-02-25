@@ -1,5 +1,6 @@
 package com.recipevault.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.recipevault.dto.RecipeRequestDTO;
 import com.recipevault.model.Recipe;
 import com.recipevault.service.RecipeService;
@@ -27,10 +28,12 @@ public class RecipeController {
             @RequestParam("difficulty") String difficulty,
             @RequestParam("instructions") String instructions,
             @RequestParam("creatorName") String creatorName,
-            @RequestParam("ingredients") List<String> ingredients,
+            @RequestParam("ingredients") String ingredientsJson,
             @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
 
-        
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<String> ingredients = objectMapper.readValue(ingredientsJson, List.class); 
+
         RecipeRequestDTO recipeDTO = new RecipeRequestDTO();
         recipeDTO.setTitle(title);
         recipeDTO.setDifficulty(difficulty);
@@ -54,11 +57,31 @@ public class RecipeController {
         return recipe.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // @PutMapping("/{id}")
-    // public ResponseEntity<Recipe> updateRecipe(@PathVariable Long id, @RequestBody Recipe recipe) {
-    //     Recipe updatedRecipe = recipeService.updateRecipe(id, recipe);
-    //     return updatedRecipe != null ? ResponseEntity.ok(updatedRecipe) : ResponseEntity.notFound().build();
-    // }
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
+    public ResponseEntity<Recipe> updateRecipe(
+            @PathVariable Long id,
+            @RequestParam("title") String title,
+            @RequestParam("difficulty") String difficulty,
+            @RequestParam("instructions") String instructions,
+            @RequestParam("creatorName") String creatorName,
+            @RequestParam("ingredients") String ingredientsJson,
+            @RequestParam(value = "image", required = false) MultipartFile image) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<String> ingredients = objectMapper.readValue(ingredientsJson, List.class);
+
+        RecipeRequestDTO recipeDTO = new RecipeRequestDTO();
+        recipeDTO.setTitle(title);
+        recipeDTO.setDifficulty(difficulty);
+        recipeDTO.setInstructions(instructions);
+        recipeDTO.setCreatorName(creatorName);
+        recipeDTO.setIngredients(ingredients);
+        recipeDTO.setImage(image);
+
+        Recipe updatedRecipe = recipeService.updateRecipe(id, recipeDTO);
+        return updatedRecipe != null ? ResponseEntity.ok(updatedRecipe) : ResponseEntity.notFound().build();
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRecipe(@PathVariable Long id) {
