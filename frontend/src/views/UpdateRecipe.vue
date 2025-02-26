@@ -20,15 +20,15 @@ const initialData: RecipeFormData = {
   difficulty: existingRecipe?.difficulty || 'EASY',
   ingredients: existingRecipe?.ingredients || [''],
   instructions: existingRecipe?.instructions || '',
-  creator: existingRecipe?.creator || '',
   imageFile: null
 }
 
 const handleUpdate = async (formData: FormData) => {
   try {
     await apiService.updateRecipe(recipeId, formData)
+    console.log("Successfully updated recipe")
     await recipeStore.loadRecipes()
-    router.push(`/recipe/${recipeId}`)
+    router.push(`/recipes/${recipeId}`);
   } catch (error) {
     console.error("Error updating recipe:", error)
     alert("Failed to update recipe. Please try again.")
