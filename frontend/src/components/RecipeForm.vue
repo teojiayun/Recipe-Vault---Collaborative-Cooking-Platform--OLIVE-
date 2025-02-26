@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted, watch } from 'vue'
-import { Delete, Plus } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules, UploadFile } from 'element-plus'
+import { reactive, ref, onMounted, watch } from "vue";
+import { Delete, Plus } from "@element-plus/icons-vue";
+import type { FormInstance, FormRules, UploadFile } from "element-plus";
+import { apiService } from "../services/apiService";
 
 // Define the shape of the form data
 export interface RecipeFormData {
@@ -9,81 +10,85 @@ export interface RecipeFormData {
   difficulty: string
   ingredients: string[]
   instructions: string
-  creator: string
   imageFile: File | null
 }
 
-// Define component props
+// Props definition
 const props = defineProps<{
-    initialData?: RecipeFormData
-    initialImageUrl?: string
-    submitText?: string
-}>()
+  initialData?: RecipeFormData
+  initialImageUrl?: string
+  submitText?: string
+}>();
 
-// Define the submit event
+// Emit event definition
 const emit = defineEmits<{
-  (e: 'submit', formData: FormData): void
+  (e: "submit", formData: FormData): void
 }>()
 
+// Form reference
 const formRef = ref<FormInstance | null>(null)
 
-// Initialize form data (use initialData if provided, otherwise default values)
+// Reactive form data
 const recipeForm = reactive<RecipeFormData>({
-  title: props.initialData?.title ?? '',
-  difficulty: props.initialData?.difficulty ?? 'EASY',
-  ingredients: props.initialData?.ingredients ? [...props.initialData.ingredients] : [''],
-  instructions: props.initialData?.instructions ?? '',
-  creator: props.initialData?.creator ?? '',
-  imageFile: null
-})
+  title: props.initialData?.title ?? "",
+  difficulty: props.initialData?.difficulty ?? "EASY",
+  ingredients: props.initialData?.ingredients ? [...props.initialData.ingredients] : [""],
+  instructions: props.initialData?.instructions ?? "",
+  imageFile: null,
+});
 
-// Validation rules for the form
+// Track if the existing image is removed
+const removeExistingImage = ref(false)
+
+// Form validation rules
 const rules: FormRules = {
-  title: [{ required: true, message: 'Title is required', trigger: 'blur' }],
-  difficulty: [{ required: true, message: 'Difficulty is required', trigger: 'change' }],
-  creator: [{ required: true, message: 'Creator name is required', trigger: 'blur' }],
-  instructions: [{ required: true, message: 'Instructions are required', trigger: 'blur' }],
+  title: [{ required: true, message: "Title is required", trigger: "blur" }],
+  difficulty: [{ required: true, message: "Difficulty is required", trigger: "change" }],
+  instructions: [{ required: true, message: "Instructions are required", trigger: "blur" }],
   ingredients: [
-    { required: true, message: 'At least one ingredient is required', trigger: 'blur' },
+    { required: true, message: "At least one ingredient is required", trigger: "blur" },
     {
       validator: (rule, value, callback) => {
         if (value.some((ing: string) => !ing.trim())) {
-          callback(new Error('Ingredient cannot be empty'))
+          callback(new Error("Ingredient cannot be empty"))
         } else {
           callback()
         }
       },
-      trigger: 'blur'
-    }
-  ]
+      trigger: "blur",
+    },
+  ],
 }
 
+// File handling
+const fileList = ref<UploadFile[]>([])
+const previewUrl = ref("")
 const dialogVisible = ref(false)
 const loading = ref(false)
 
-// Image upload handling
-const fileList = ref<UploadFile[]>([])
-const previewUrl = ref('')
-
-// If an initial image URL is provided (update mode), use it for the preview
-onMounted(() => {
+// Initialize fileList for editing mode
+const initializeFileList = async () => {
   if (props.initialImageUrl) {
-    previewUrl.value = props.initialImageUrl;
+    const imageUrl = await apiService.fetchImage(props.initialImageUrl) // Use the existing method
+
+    previewUrl.value = imageUrl
+
     fileList.value = [
       {
-        name: 'Existing Image',
-        url: props.initialImageUrl,
-        status: 'success', // Use 'success' instead of 'finished'
-        uid: 'existing-image'
-      } as unknown as UploadFile
-    ];
+        name: "Existing Image",
+        url: previewUrl.value,
+        status: "success",
+        uid: "existing-image",
+      } as unknown as UploadFile,
+    ]
   }
-});
+}
 
-// Handle image file change (limit to one file)
+// Handle file change event
 const handleFileChange = (file: UploadFile) => {
   fileList.value = [file]
   recipeForm.imageFile = file.raw as File
+  removeExistingImage.value = false
 
   const reader = new FileReader()
   reader.onload = (e) => {
@@ -92,32 +97,16 @@ const handleFileChange = (file: UploadFile) => {
   reader.readAsDataURL(file.raw as File)
 }
 
-watch(
-  () => props.initialImageUrl,
-  (newVal) => {
-    if (newVal) {
-      previewUrl.value = newVal;
-      fileList.value = [
-        {
-          name: 'Existing Image',
-          url: newVal,
-          status: 'success', // Use 'success' here as well
-          uid: 'existing-image'
-        } as unknown as UploadFile
-      ];
-    }
-  }
-);
-
-// Remove image from the upload list and clear preview
+// Remove image from the upload list
 const handleRemove = () => {
   fileList.value = []
   recipeForm.imageFile = null
-  previewUrl.value = ''
+  previewUrl.value = ""
+  removeExistingImage.value = true
   dialogVisible.value = false
 }
 
-// Open preview dialog for the uploaded image
+// Open image preview dialog
 const handlePictureCardPreview = () => {
   if (previewUrl.value) {
     dialogVisible.value = true
@@ -126,7 +115,7 @@ const handlePictureCardPreview = () => {
 
 // Ingredient management
 const addIngredient = () => {
-  recipeForm.ingredients.push('')
+  recipeForm.ingredients.push("")
 }
 const removeIngredient = (index: number) => {
   if (recipeForm.ingredients.length > 1) {
@@ -134,7 +123,7 @@ const removeIngredient = (index: number) => {
   }
 }
 
-// When the form is submitted, validate and build the FormData then emit the "submit" event
+// Handle form submission
 const handleSubmit = () => {
   formRef.value?.validate((valid) => {
     if (!valid) return
@@ -144,15 +133,38 @@ const handleSubmit = () => {
     formData.append("title", recipeForm.title)
     formData.append("difficulty", recipeForm.difficulty)
     formData.append("instructions", recipeForm.instructions)
-    formData.append("creatorName", recipeForm.creator)
     formData.append("ingredients", JSON.stringify(recipeForm.ingredients))
+
     if (recipeForm.imageFile) {
       formData.append("image", recipeForm.imageFile)
     }
+
+    if (props.initialData) { 
+      formData.append("removeExistingImage", removeExistingImage.value.toString())
+    }
+
+    console.log("Submitting FormData:");
+    for (const pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
     emit("submit", formData)
     loading.value = false
   })
 }
+
+// Initialize fileList when component mounts
+onMounted(() => {
+  initializeFileList()
+})
+
+// Watch for prop changes to update fileList dynamically
+watch(
+  () => props.initialImageUrl,
+  () => {
+    initializeFileList()
+  }
+)
 </script>
 
 <template>
@@ -172,11 +184,6 @@ const handleSubmit = () => {
         </el-select>
       </el-form-item>
 
-      <!-- Creator -->
-      <el-form-item label="Creator" prop="creator">
-        <el-input v-model="recipeForm.creator" />
-      </el-form-item>
-
       <!-- Instructions -->
       <el-form-item label="Instructions" prop="instructions">
         <el-input v-model="recipeForm.instructions" type="textarea" rows="4" />
@@ -187,12 +194,7 @@ const handleSubmit = () => {
         <div class="ingredient-list">
           <div v-for="(ingredient, index) in recipeForm.ingredients" :key="index" class="ingredient-row">
             <el-input v-model="recipeForm.ingredients[index]" />
-            <el-button
-              type="danger"
-              :icon="Delete"
-              @click="removeIngredient(index)"
-              v-if="recipeForm.ingredients.length > 1"
-            />
+            <el-button type="danger" :icon="Delete" @click="removeIngredient(index)" v-if="recipeForm.ingredients.length > 1" />
           </div>
         </div>
         <el-button type="primary" :icon="Plus" @click="addIngredient">Add Ingredient</el-button>
@@ -201,7 +203,6 @@ const handleSubmit = () => {
       <!-- Image Upload with Preview -->
       <el-form-item label="Recipe Image">
         <el-upload
-          action="#"
           list-type="picture-card"
           :auto-upload="false"
           :limit="1"
@@ -257,16 +258,10 @@ const handleSubmit = () => {
   max-height: 300px;
   object-fit: contain;
 }
-.dialog-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
 .submit-button {
   width: 100%;
   margin-top: 10px;
 }
-
 .el-button {
   margin-top: 0px;
   margin-left: 10px;
