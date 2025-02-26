@@ -8,7 +8,7 @@ public class RecipeRequestDTO {
     private String title;
     private String difficulty;
     private String instructions;
-    private String creatorName;
+    // private String creatorName;
     private List<String> ingredients;
     private MultipartFile image;
 
@@ -22,8 +22,8 @@ public class RecipeRequestDTO {
     public String getInstructions() { return instructions; }
     public void setInstructions(String instructions) { this.instructions = instructions; }
 
-    public String getCreatorName() { return creatorName; }
-    public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
+    // public String getCreatorName() { return creatorName; }
+    // public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
 
     public List<String> getIngredients() { return ingredients; }
     public void setIngredients(List<String> ingredients) { this.ingredients = ingredients; }

@@ -1,10 +1,14 @@
 package com.recipevault.service;
 
 import com.recipevault.dto.RecipeRequestDTO;
+import com.recipevault.dto.RecipeResponseDTO;
 import com.recipevault.model.Difficulty;
 import com.recipevault.model.Ingredient;
 import com.recipevault.model.Recipe;
+import com.recipevault.model.UserInfo;
 import com.recipevault.repository.RecipeRepository;
+import com.recipevault.repository.UserRepository;
+import com.recipevault.util.JwtUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,12 +28,16 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class RecipeService {
     private final RecipeRepository recipeRepository;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
-    public RecipeService(RecipeRepository recipeRepository) {
+    public RecipeService(RecipeRepository recipeRepository, UserRepository userRepository, JwtUtil jwtUtil) {
         this.recipeRepository = recipeRepository;
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     private void createUploadDirectory() {
@@ -39,22 +47,39 @@ public class RecipeService {
         }
     }
 
-    public List<Recipe> getAllRecipes() {
-        return recipeRepository.findAll();
+    public List<RecipeResponseDTO> getAllRecipes() {
+        return recipeRepository.findAll().stream()
+                .map(RecipeResponseDTO:: fromRecipe)
+                .toList();
     }
 
-    public Optional<Recipe> getRecipeById(Long id) {
-        return recipeRepository.findById(id);
+
+    public Optional<RecipeResponseDTO> getRecipeById(Long id) {
+        return recipeRepository.findById(id).map(RecipeResponseDTO::fromRecipe);
     }
 
-    public Recipe createRecipe(RecipeRequestDTO recipeDTO) throws IOException {
+
+    public List<RecipeResponseDTO> getRecipesByUser(String username) {
+        UserInfo user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        return recipeRepository.findByUser(user).stream()
+                .map(RecipeResponseDTO::fromRecipe)
+                .toList();
+    }
+
+
+    public Recipe createRecipe(String token, RecipeRequestDTO recipeDTO) throws IOException {
         createUploadDirectory();
 
+        // Get User Information
+        String username = jwtUtil.extractUsername(token);
+        UserInfo user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Create Recipe
         Recipe recipe = new Recipe();
         recipe.setTitle(recipeDTO.getTitle());
         recipe.setDifficulty(Difficulty.valueOf(recipeDTO.getDifficulty().toUpperCase()));
         recipe.setInstructions(recipeDTO.getInstructions());
-        recipe.setCreatorName(recipeDTO.getCreatorName());
+        recipe.setUser(user);
 
         // Save Image if uploaded
         MultipartFile image = recipeDTO.getImage();
@@ -74,17 +99,20 @@ public class RecipeService {
         return recipeRepository.save(recipe);
     }
 
-    public Recipe updateRecipe(Long id, RecipeRequestDTO recipeDTO) throws IOException {
-        Optional<Recipe> optionalRecipe = recipeRepository.findById(id);
-        if (optionalRecipe.isEmpty()) {
-            return null; // Recipe not found
+
+
+    public Recipe updateRecipe(String token, Long id, RecipeRequestDTO recipeDTO, boolean removeExistingImage) throws IOException {
+        String username = jwtUtil.extractUsername(token);
+        Recipe recipe = recipeRepository.findById(id).orElse(null);
+
+        if (recipe == null || !recipe.getUser().getUsername().equals(username)) {
+            return null; // Not the owner
         }
     
-        Recipe recipe = optionalRecipe.get();
+        // Recipe recipe = optionalRecipe.get();
         recipe.setTitle(recipeDTO.getTitle());
         recipe.setDifficulty(Difficulty.valueOf(recipeDTO.getDifficulty().toUpperCase()));
         recipe.setInstructions(recipeDTO.getInstructions());
-        recipe.setCreatorName(recipeDTO.getCreatorName());
     
         // Clear existing ingredients using Iterator to avoid orphan deletion errors
         Iterator<Ingredient> iterator = recipe.getIngredients().iterator();
@@ -99,7 +127,13 @@ public class RecipeService {
             newIngredients.add(new Ingredient(null, ingredientName, recipe));
         }
         recipe.getIngredients().addAll(newIngredients); 
-    
+        
+        // Handle Image Removal
+        if (removeExistingImage && recipe.getImageUrl() != null) {
+            // deleteImageFromStorage(recipe.getImageUrl()); 
+            recipe.setImageUrl(null); // Clear image reference in database
+        }
+
         // Check if new image is uploaded
         MultipartFile image = recipeDTO.getImage();
         if (image != null && !image.isEmpty()) {
@@ -119,8 +153,16 @@ public class RecipeService {
     
         return recipeRepository.save(recipe);
     }
-    
-    public void deleteRecipe(Long id) {
-        recipeRepository.deleteById(id);
+
+    public boolean deleteRecipe(String token, Long id) {
+        String username = jwtUtil.extractUsername(token);
+        Recipe recipe = recipeRepository.findById(id).orElse(null);
+
+        if (recipe == null || !recipe.getUser().getUsername().equals(username)) {
+            return false; // Unauthorized
+        }
+
+        recipeRepository.delete(recipe);
+        return true;
     }
 }

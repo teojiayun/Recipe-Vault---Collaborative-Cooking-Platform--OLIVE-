@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
@@ -31,12 +32,18 @@ public class Recipe {
 
     private String imageUrl;
     
-    @Column(nullable = false)
-    private String creatorName;
+    // @Column(nullable = false)
+    // private String creatorName;
 
     private LocalDateTime createdDate = LocalDateTime.now();
 
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Ingredient> ingredients;
+
+    // User Relationship
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable=false)
+    @JsonIgnoreProperties({"password", "recipes"})
+    private UserInfo user;
 }
