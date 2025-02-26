@@ -4,6 +4,7 @@
     <nav class="navbar">
       <router-link to="/" class="nav-link">Dashboard</router-link>
       <router-link to="/create" class="nav-link">Create Recipe</router-link>
+      <router-link to="/account" class="nav-link">Account</router-link>
     </nav>
 
     <!-- Main Content -->
