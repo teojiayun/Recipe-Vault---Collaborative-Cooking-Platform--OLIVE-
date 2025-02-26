@@ -8,8 +8,9 @@ export interface Recipe {
   ingredients: string[]
   instructions: string
   imageUrl: string
-  creator: string
   createdDate: string
+  userId: number
+  fullName: string
 }
 
 export const useRecipeStore = defineStore('recipeStore', {
@@ -20,14 +21,6 @@ export const useRecipeStore = defineStore('recipeStore', {
     async loadRecipes() {
       this.recipes = await apiService.fetchRecipes()
     },
-    // async addRecipe(recipe: Recipe) {
-    //   try {
-    //     await apiService.createRecipe(recipe)
-    //     await this.loadRecipes() // ✅ Refresh list
-    //   } catch (error) {
-    //     console.error("Error adding recipe:", error)
-    //   }
-    // },
     getRecipeById(id: number) {
       return this.recipes.find(recipe => recipe.id === id)
     }
