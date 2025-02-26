@@ -12,7 +12,7 @@ const props = defineProps({
 })
 
 const router = useRouter()
-const imageSrc = ref('https://via.placeholder.com/150')
+const imageSrc = ref('')
 
 onMounted(async () => {
   if (props.recipe.imageUrl) {
@@ -37,13 +37,13 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
 
     <div class="recipe-info">
       <h3 class="recipe-title">{{ recipe.title }}</h3>
-      <p class="recipe-creator">{{ recipe.creator }}</p>
+      <p class="recipe-creator">{{ recipe.fullName }}</p>
       <p><strong>Ingredients:</strong> {{ recipe.ingredients.length }}</p>
       <p><strong>Created:</strong> {{ new Date(recipe.createdDate).toLocaleDateString() }}</p>
     </div>
     
     <!-- Difficulty Tag -->
-    <el-tag :type="getDifficultyTagType(recipe.difficulty)">
+    <el-tag :type="getDifficultyTagType(recipe.difficulty)" class="difficulty-tag">
       {{ recipe.difficulty }}
     </el-tag>
   </el-card>
@@ -52,7 +52,7 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
 <style scoped>
 .recipe-card {
   width: 300px;
-  height: 450px; /* ✅ Keeps all cards uniform */
+  height: 450px; /* Keeps all cards uniform */
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -83,6 +83,14 @@ const getDifficultyTagType = (difficulty: 'EASY' | 'MEDIUM' | 'HARD') => {
   font-weight: bold;
   margin-bottom: 5px;
   margin-top: 10px;
+}
+
+.difficulty-tag {
+  font-size: 17px; 
+  padding: 10px 20px; 
+  border-radius: 8px; 
+  text-transform: uppercase; 
+  letter-spacing: 1px; 
 }
 
 .recipe-creator {
