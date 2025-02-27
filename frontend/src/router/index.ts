@@ -22,15 +22,25 @@ const router = createRouter({
   routes
 })
 
-// Redirect if user is not authenticated
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   userStore.loadUserFromStorage() // Ensure userStore is updated
-  if (to.meta.requiresAuth && !userStore.user) {
-    next('/login')
-  } else {
-    next()
+
+  // Check if user is authenticated
+  if (to.meta.requiresAuth) {
+    if (!userStore.user) {
+      return next('/login') // Redirect if no user is logged in
+    }
+
+    // Check if the token is expired
+    if (userStore.isTokenExpired()) {
+      userStore.logout() // Clear session
+      return next('/login') // Redirect to login
+    }
   }
+
+  next() // Allow navigation
 })
+
 
 export default router

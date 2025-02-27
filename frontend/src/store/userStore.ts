@@ -26,6 +26,13 @@ export const useUserStore = defineStore('userStore', {
           throw error
         }
       },
+      isTokenExpired() {
+        const token = this.user?.token
+        if (!token) return true // No token = expired
+      
+        const payload = JSON.parse(atob(token.split('.')[1])) // Decode JWT
+        return payload.exp * 1000 < Date.now() // Compare expiration
+      },
       logout() {
         this.user = null
         localStorage.removeItem('jwtToken')
