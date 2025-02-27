@@ -15,7 +15,7 @@ export const useUserStore = defineStore('userStore', {
     actions: {
       async login(username: string, password: string) {
         try {
-          const response = await axios.post('http://localhost:8080/auth/login', { username, password })
+          const response = await axios.post('http://52.65.20.122/auth/login', { username, password })
           // The API returns { userId, username, fullName, token }
           this.user = response.data
           // Optionally, persist token and user details in localStorage
