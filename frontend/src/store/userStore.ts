@@ -1,5 +1,5 @@
-import axios from "axios"
 import { defineStore } from "pinia"
+import { apiService } from "../services/apiService"
 
 export interface User {
     userId: number
@@ -15,12 +15,11 @@ export const useUserStore = defineStore('userStore', {
     actions: {
       async login(username: string, password: string) {
         try {
-          const response = await axios.post('http://52.65.20.122:8080/auth/login', { username, password })
-          // The API returns { userId, username, fullName, token }
-          this.user = response.data
-          // Optionally, persist token and user details in localStorage
-          localStorage.setItem('jwtToken', response.data.token)
-          localStorage.setItem('user', JSON.stringify(response.data))
+          const userData = await apiService.login({ username, password })
+          this.user = userData
+          // Persist token and user details in localStorage
+          localStorage.setItem('jwtToken', userData.token)
+          localStorage.setItem('user', JSON.stringify(userData))
         } catch (error) {
           console.error("Login error:", error)
           throw error
