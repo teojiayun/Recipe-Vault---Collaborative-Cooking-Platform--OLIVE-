@@ -13,7 +13,7 @@ services:
     volumes:
       - ./backend/uploads:/app/uploads
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/recipevault
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/recipevault?allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpassword
     depends_on:
