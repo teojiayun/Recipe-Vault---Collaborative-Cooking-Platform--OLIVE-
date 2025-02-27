@@ -1,3 +1,7 @@
+<script setup lang="ts">
+
+</script>
+
 <template>
   <div>
     <!-- Navigation Bar -->
@@ -9,23 +13,10 @@
 
     <!-- Main Content -->
     <div class="main-content">
-      <router-view></router-view> <!-- Dynamic page rendering -->
+      <router-view></router-view>
     </div>
   </div>
 </template>
-
-<script>
-import { useRoute } from "vue-router";
-
-export default {
-  computed: {
-    isRecipeDetailPage() {
-      const route = useRoute();
-      return route.path.startsWith("/recipe/");
-    },
-  },
-};
-</script>
 
 <style scoped>
 .navbar {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RecipeForm, { type RecipeFormData } from '../components/RecipeForm.vue'
+import RecipeForm from '../components/RecipeForm.vue'
 import { useRecipeStore } from '../store/recipeStore'
 import { useRouter } from 'vue-router'
 import { apiService } from '../services/apiService'
@@ -13,11 +13,15 @@ const handleCreate = async (formData: FormData) => {
     console.log('Response: ', response)
     await recipeStore.loadRecipes()
 
-    if (response.id) {
-      router.push(`/recipes/${response.id}`);
-    } else {
-      console.error("No ID returned from API.");
-    }
+    // if (response.id) {
+    //   router.push(`/recipes/${response.id}`);
+    // } else {
+    //   console.error("No ID returned from API.");
+    // }
+
+    // Ensure correct navigation without extra query parameters
+    router.replace({ path: "/" })
+
   } catch (error) {
     console.error("Error creating recipe:", error)
     alert("Failed to create recipe. Please try again.")

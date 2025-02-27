@@ -22,7 +22,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const userStore = useUserStore()
   userStore.loadUserFromStorage() // Ensure userStore is updated
 

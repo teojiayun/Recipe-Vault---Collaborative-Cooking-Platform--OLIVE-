@@ -54,13 +54,13 @@ export const apiService = {
       return URL.createObjectURL(response.data) // Convert to a usable URL
     } catch (error) {
       console.error('Error fetching image:', error)
-      return `${API_BASE_URL}/images/placeholder.jpg`; // Fallback image
+      return `${API_BASE_URL}/uploads/placeholder.jpg`; // Fallback image
     }
   },
 
   async createRecipe(formData: FormData) {
     try {
-      // console.log([...formData.entries()]);
+      console.log([...formData.entries()]);
       const response = await apiClient.post(`/recipes`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       })

@@ -1,0 +1,27 @@
+{
+    "AWSEBDockerrunVersion": "1",
+    "Image": {
+      "Name": "your-dockerhub-username/recipevault-backend",
+      "Update": "true"
+    },
+    "Ports": [
+      {
+        "ContainerPort": "8080"
+      }
+    ],
+    "Environment": [
+      {
+        "Name": "SPRING_DATASOURCE_URL",
+        "Value": "jdbc:mysql://your-db-instance.rds.amazonaws.com:3306/recipevault"
+      },
+      {
+        "Name": "SPRING_DATASOURCE_USERNAME",
+        "Value": "admin"
+      },
+      {
+        "Name": "SPRING_DATASOURCE_PASSWORD",
+        "Value": "Jy20093712828"
+      }
+    ]
+  }
+  

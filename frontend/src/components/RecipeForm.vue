@@ -48,7 +48,7 @@ const rules: FormRules = {
   ingredients: [
     { required: true, message: "At least one ingredient is required", trigger: "blur" },
     {
-      validator: (rule, value, callback) => {
+      validator: (_rule, value, callback) => {
         if (value.some((ing: string) => !ing.trim())) {
           callback(new Error("Ingredient cannot be empty"))
         } else {
@@ -192,7 +192,7 @@ watch(
       <!-- Ingredients -->
       <el-form-item label="Ingredients" prop="ingredients">
         <div class="ingredient-list">
-          <div v-for="(ingredient, index) in recipeForm.ingredients" :key="index" class="ingredient-row">
+          <div v-for="(_ingredient, index) in recipeForm.ingredients" :key="index" class="ingredient-row">
             <el-input v-model="recipeForm.ingredients[index]" />
             <el-button type="danger" :icon="Delete" @click="removeIngredient(index)" v-if="recipeForm.ingredients.length > 1" />
           </div>
@@ -222,7 +222,8 @@ watch(
 
       <!-- Submit Button -->
       <el-form-item>
-        <el-button type="primary" native-type="submit" :loading="loading" class="submit-button" @click="handleSubmit">
+        <!-- FIXED: use button instead of submit for native-type; prevents refreshing the application (Routing Problem) -->
+        <el-button type="primary" native-type="button" :loading="loading" @click="handleSubmit">
           {{ submitText || "Submit Recipe" }}
         </el-button>
       </el-form-item>

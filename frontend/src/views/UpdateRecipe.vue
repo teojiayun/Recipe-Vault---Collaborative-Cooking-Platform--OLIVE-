@@ -28,7 +28,12 @@ const handleUpdate = async (formData: FormData) => {
     await apiService.updateRecipe(recipeId, formData)
     console.log("Successfully updated recipe")
     await recipeStore.loadRecipes()
-    router.push(`/recipes/${recipeId}`);
+
+    // router.push(`/recipes/${recipeId}`);
+
+    // Ensure correct navigation without extra query parameters
+    router.replace({ path: "/" })
+
   } catch (error) {
     console.error("Error updating recipe:", error)
     alert("Failed to update recipe. Please try again.")
