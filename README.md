@@ -57,7 +57,7 @@ docker-compose up --build
 
 ### 🔒 User Authentication & Authorization
 - User Accounts:
-    - Signup, login, and session-based authentication.
+    - Signup, login, and session-based authentication using JSON Web Token (JWT).
 - User-Specific Operations:
     - Only recipe owners can edit or delete their own recipes.
 ### 📊 User Dashboard
