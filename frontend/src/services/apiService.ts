@@ -2,7 +2,7 @@ import axios from 'axios'
 import type { Recipe } from '../store/recipeStore'
 import { useUserStore } from '../store/userStore'
 
-const API_BASE_URL = "http://3.107.98.238:8080"
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 // PRODUCTION: "http://52.65.20.122:8080"; "http://3.107.98.238:8080"
 // DEVELOPMENT: "http://localhost:8080"
 
