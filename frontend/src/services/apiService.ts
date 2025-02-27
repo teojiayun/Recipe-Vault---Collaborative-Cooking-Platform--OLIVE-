@@ -2,7 +2,9 @@ import axios from 'axios'
 import type { Recipe } from '../store/recipeStore'
 import { useUserStore } from '../store/userStore'
 
-const API_BASE_URL = 'http://localhost:8080'
+const API_BASE_URL = 'http://52.65.20.122:8080'
+// PRODUCTION: "http://52.65.20.122:8080"
+// DEVELOPMENT: "http://locahost:8080"
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL
